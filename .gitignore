@@ -1,0 +1,33 @@
+# autoconf
+autoscan.log
+configure.scan
+autom4te.cache
+aclocal.m4
+compile
+configure
+config.*
+.deps
+depcomp
+install-sh
+missing
+stamp-h1
+Makefile
+Makefile.in
+
+# build
+src/*.o
+src/.dirstamp
+pdir
+
+# test script
+test-driver
+test-suite.log
+tests/*.log
+tests/*.trs
+
+# coverage
+src/*.gcda
+src/*.gcno
+
+# gdb
+.gdb_history
