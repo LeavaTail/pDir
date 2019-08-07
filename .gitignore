@@ -1,3 +1,6 @@
+# backupfile
+*~
+
 # autoconf
 autoscan.log
 configure.scan
@@ -13,6 +16,12 @@ missing
 stamp-h1
 Makefile
 Makefile.in
+
+# localization
+ABOUT-NLS
+intl
+m4
+mkinstalldirs
 
 # build
 src/*.o

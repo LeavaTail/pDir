@@ -4,15 +4,16 @@
  * Print Directory entry (like 'ls').
  */
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <config.h>
+#include "gettext.h"
+#define _(String) gettext (String)
 
 int main(int argc, char *argv[])
 {
+	setlocale (LC_ALL, "");
+	bindtextdomain (PACKAGE, LOCALEDIR);
+	textdomain (PACKAGE);
 
+	printf(gettext("hello, world\n"));
 	return 0;
 }
