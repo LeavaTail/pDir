@@ -2,15 +2,15 @@
 # pDir パッケージに対する英訳.
 # Copyright (C) 2019 Free Software Foundation, Inc.
 # This file is distributed under the same license as the pDir package.
-# LeavaTail <blue@linuxdev>, 2019.
+# LeavaTail <starbow.duster@gmail.com>, 2019.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: pDir 0.1\n"
-"Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-08-06 00:38+0900\n"
+"Report-Msgid-Bugs-To: starbow.duster@gmail.com\n"
+"POT-Creation-Date: 2019-08-16 13:40+0900\n"
 "PO-Revision-Date: 2019-08-06 00:50+0900\n"
-"Last-Translator: LeavaTail <blue@linuxdev>\n"
+"Last-Translator: LeavaTail <starbow.duster@gmail.com>\n"
 "Language-Team: Japanese\n"
 "Language: ja\n"
 "MIME-Version: 1.0\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/main.c:17
+#: src/main.c:41
 #, c-format
-msgid "hello, world\n"
-msgstr "こんにちは、世界。\n"
+msgid "Usage: %s [OPTION]... [FILE]...\n"
+msgstr "使用法: %s [オプション]... [ファイル]...\n"

@@ -9,7 +9,7 @@ en@quot.header
 insert-header.sin
 POTFILES
 quot.sed
-remove-potcdate.sin
+remove-potcdate.*
 stamp-po
 
 *.gmo
