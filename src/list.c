@@ -158,6 +158,16 @@ size_t get_length()
 }
 
 /**
+ * get_listcount - get count of linked-list data.
+ *
+ * Return: count of linked-list data
+ */
+size_t get_listcount()
+{
+	return count;
+}
+
+/**
  * get_list - get data to linked-list.
  * @d: output data address.
  * @l: output data length (xx bytes)
