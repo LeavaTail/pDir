@@ -11,12 +11,14 @@
 #include <limits.h>
 #include <sys/stat.h>
 #include "gettext.h"
+#include "error.h"
 #include "list.h"
 #define _(String) gettext (String)
 #define PROGRAM_NAME	"pdir"
 
 #define ALLOCATION_FAILURE	1
 #define CMDLINE_FAILURE	2
+#define ACCESS_FAILURE	3
 #define ALLOCATE_COUNT	100
 
 #define GETOPT_HELP_CHAR	(CHAR_MIN - 2)
@@ -35,6 +37,18 @@ void usage(int status)
 			PROGRAM_NAME);
 
 	exit(status);
+}
+
+static void file_failure (int status, char const *filename)
+{
+	switch(status){
+		case ALLOCATION_FAILURE:
+			error(status, _("%s: cannot allocate memory"), PROGRAM_NAME);
+			break;
+		case ACCESS_FAILURE:
+			error(status, _("%s: cannot access '%s'"), PROGRAM_NAME, filename);
+			break;
+	}
 }
 
 static bool print_all;
@@ -119,29 +133,30 @@ static int addfiles_slots(char const *name)
 	if(alloc_count <= unused_index) {
 		files = realloc(files, alloc_count+=ALLOCATE_COUNT);
 		if(!files) {
-			perror("expanded file slots arae");
+			file_failure(ALLOCATION_FAILURE, NULL);
 			free(files);
 			exit(ALLOCATION_FAILURE);
 		}
 		alloc_count += ALLOCATE_COUNT;
 	}
-	finfo = &files[unused_index++];
+	finfo = &files[unused_index];
 	memset(finfo, '\0', sizeof *finfo);
+
+	err = lstat(name, &finfo->status);
+	if(err) {
+		file_failure(ACCESS_FAILURE, name);
+		goto errout;
+	}
 
 	finfo->name = malloc((strlen(name)+1) * sizeof *name);
 	if(!finfo->name) {
-		perror("allocate file name");
+		file_failure(ALLOCATION_FAILURE, NULL);
 		err = ALLOCATION_FAILURE;
 		goto errout;
 	}
 	strncpy(finfo->name, name, strlen(name)+1);
 
-	err = lstat(name, &finfo->status);
-	if(err) {
-		perror("cannot access");
-		goto errout;
-	}
-
+	unused_index++;
 errout:
 	return err;
 }
@@ -208,7 +223,7 @@ int main(int argc, char *argv[])
 	alloc_count = ALLOCATE_COUNT;
 	files = malloc (alloc_count * (sizeof *files));
 	if(!files) {
-		perror("Initialize File slots");
+		file_failure(ALLOCATION_FAILURE, NULL);
 		exit(ALLOCATION_FAILURE);
 	}
 
