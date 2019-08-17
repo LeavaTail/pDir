@@ -115,6 +115,18 @@ static void joinpath(char *dest, const char *dirname, const char *name)
 }
 
 /**
+ * file_ignored - "." or ".." is normally ignored.
+ * @name:   File name
+ *
+ * Return: true  - File should be ignore ("." OR ".." OR ".FILENAME")
+ *         false - File shoule be print  ("FILENAME" OR '-a' option)
+ */
+static bool file_ignored(char const *name)
+{
+	return (!print_all && (dot_or_ddot(name) || name[0] == '.'));
+}
+
+/**
  * struct fileinfo - File information.
  * @name:   File name
  * @status: File status
@@ -306,7 +318,7 @@ static void print_dir(char const *name)
 
 	clear_slots();
 	while((next = readdir(dirp)) != NULL) {
-		if(!dot_or_ddot(next->d_name) || print_all )
+		if(!file_ignored(next->d_name))
 			addfiles_slots(next->d_name, name);
 	}
 
