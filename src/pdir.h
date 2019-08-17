@@ -8,6 +8,19 @@
 #define PROGRAM_NAME	"pdir"
 
 /**
+ * Debug code
+ */
+#ifdef PDIR_DEBUG
+#define pdir_debug(fmt, ...)						\
+	do {								\
+		fprintf(stderr, "[%s] (%s, %d): %s: " fmt, ##__VA_ARGS__,	\
+			__DATE__, __FILE__, __LINE__, __func__);			\
+	} while (0)
+#else
+#define pdir_debug(fmt, ...)	do { } while (0)
+#endif
+
+/**
  * ERROR STATUS CODE
  *  1: allocation failed(malloc)
  *  2: invalid command-line option

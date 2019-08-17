@@ -1,6 +1,6 @@
 # GLOBAL CFLAGS
 AM_CFLAGS   = -coverage -O2 -Wall 
-AM_CPPFLAGS = -DLOCALEDIR='"$(localedir)"'
+AM_CPPFLAGS = -DLOCALEDIR='"$(localedir)"' -DPDIR_DEBUG
 AM_CXXFLAGS = $(CFLAGS)
 
 bin_PROGRAMS = pdir
