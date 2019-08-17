@@ -9,6 +9,7 @@
 #include <config.h>
 #include <getopt.h>
 #include <limits.h>
+#include <dirent.h>
 #include <sys/stat.h>
 #include "gettext.h"
 #include "error.h"
@@ -19,6 +20,8 @@
 #define ALLOCATION_FAILURE	1
 #define CMDLINE_FAILURE	2
 #define ACCESS_FAILURE	3
+#define OPENDIRECTRY_FAILURE	4
+
 #define ALLOCATE_COUNT	100
 
 #define GETOPT_HELP_CHAR	(CHAR_MIN - 2)
@@ -48,7 +51,20 @@ static void file_failure (int status, char const *name)
 		case ACCESS_FAILURE:
 			error(status, _("%s: cannot access '%s'"), PROGRAM_NAME, name);
 			break;
+		case OPENDIRECTRY_FAILURE:
+			error(status, _("%s: cannot open directory '%s'"), PROGRAM_NAME, name);
+			break;
 	}
+}
+
+static inline bool dot_or_ddot(char const *name)
+{
+	bool ret = false;
+	if (name != NULL && name[0] == '.') {
+		char sep = name[(name[1] == '.') + 1];
+		ret = (!sep || sep == '/');
+	}
+	return ret;
 }
 
 static bool print_all;
@@ -165,13 +181,13 @@ static int addfiles_slots(char const *name, char const *dirname)
 		goto errout;
 	}
 
-	finfo->name = malloc((strlen(path)+1) * sizeof *path);
+	finfo->name = malloc((strlen(name)+1) * sizeof *name);
 	if(!finfo->name) {
 		file_failure(ALLOCATION_FAILURE, NULL);
 		err = ALLOCATION_FAILURE;
 		goto errout;
 	}
-	strncpy(finfo->name, path, strlen(path)+1);
+	strncpy(finfo->name, name, strlen(path)+1);
 
 	unused_index++;
 errout:
@@ -209,18 +225,60 @@ static void printfiles_slots()
 }
 
 /**
- * clean_slots - clean up file information slots
+ * clear_slots - clean up file information slots
  *
- * WARN: Be sure clean up list when use slots.
+ * WARN: files slots will not release.
  */
-static void clean_slots()
+static void clear_slots()
 {
 	int i;
 	for(i = unused_index; i >= 0;  i--, unused_index--) {
 		free(files[i].name);
 	}
+	unused_index = 0;
+}
 
+/**
+ * clean_slots - clean up all file information slots
+ *
+ * WARN: Be sure clean up list when use slots.
+ */
+static void clean_slots()
+{
+	clear_slots();
 	free(files);
+}
+
+static void extractfiles_fromdir(char const *dirname)
+{
+	int i;
+	for(i = unused_index; i-- > 0; ) {
+		struct fileinfo f = files[i];
+
+		if(((f.status.st_mode & S_IFMT) == S_IFDIR)){
+			add_list(f.name, strlen(f.name));
+		}
+	}
+}
+
+static void print_dir(char const *name)
+{
+	DIR *dirp;
+	struct dirent *next;
+
+	dirp = opendir(name);
+	if(!dirp) {
+		file_failure(OPENDIRECTRY_FAILURE, name);
+		return;
+	}
+
+	clear_slots();
+	while((next = readdir(dirp)) != NULL) {
+		addfiles_slots(next->d_name, name);
+	}
+
+	closedir(dirp);
+	printfiles_slots();
 }
 
 int main(int argc, char *argv[])
@@ -252,7 +310,19 @@ int main(int argc, char *argv[])
 			addfiles_slots(argv[i], "");
 	}
 
+	if(unused_index) {
+		extractfiles_fromdir(NULL);
+	}
 	printfiles_slots();
+
+	while(get_listcount()) {
+		size_t len = get_length();
+		char* dirname = malloc(len * sizeof(char));
+		get_list(dirname, len);
+		print_dir(dirname);
+		free(dirname);
+	}
+
 	clean_list();
 	clean_slots();
 	return 0;
