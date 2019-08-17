@@ -126,11 +126,27 @@ struct fileinfo {
 
 //! File information slots
 static struct fileinfo *files;
+//! sorted File information slots
+static struct fileinfo **sorted;
 //! allocate `fileinfo` count in slots
 static size_t alloc_count;
 //! index of first unused `fileinfo` count in slots
 static size_t unused_index;
 
+static int compare_name(const void *a, const void *b)
+{
+	struct fileinfo *ai = *(struct fileinfo**)a;
+	struct fileinfo *bi = *(struct fileinfo**)b;
+
+	if(((ai->status.st_mode & S_IFMT) == S_IFDIR)
+	&& ((bi->status.st_mode & S_IFMT) != S_IFDIR))
+		return -1;
+
+	if(((ai->status.st_mode & S_IFMT) != S_IFDIR)
+	&& ((bi->status.st_mode & S_IFMT) == S_IFDIR))
+		return 1;
+	return strcmp(ai->name, bi->name);
+}
 
 /**
  * init_slots - Initialize File information slots
@@ -161,6 +177,12 @@ static int addfiles_slots(char const *name, char const *dirname)
 		if(!files) {
 			file_failure(ALLOCATION_FAILURE, NULL);
 			free(files);
+			exit(ALLOCATION_FAILURE);
+		}
+		sorted = realloc(sorted, alloc_count);
+		if(!sorted) {
+			file_failure(ALLOCATION_FAILURE, NULL);
+			free(sorted);
 			exit(ALLOCATION_FAILURE);
 		}
 	}
@@ -201,10 +223,10 @@ errout:
  *
  * Return:  Number of items write
  */
-static size_t __printfiles_slots(FILE *out, const struct fileinfo f)
+static size_t __printfiles_slots(FILE *out, const struct fileinfo *f)
 {
 	size_t len = 0;
-	const char* name = f.name;
+	const char* name = f->name;
 
 	if(out != NULL)
 		len = fwrite(name, sizeof(char), strlen(name), out);
@@ -219,7 +241,7 @@ static void printfiles_slots()
 	int i;
 
 	for(i = 0; i < unused_index; i++) {
-		__printfiles_slots(stdout, files[i]);
+		__printfiles_slots(stdout, sorted[i]);
 		putchar('\n');
 	}
 }
@@ -246,7 +268,17 @@ static void clear_slots()
 static void clean_slots()
 {
 	clear_slots();
+	free(sorted);
 	free(files);
+}
+
+static void sortfiles_slots()
+{
+	int i;
+	for(i = 0 ; i < unused_index; i++) {
+		sorted[i] = &files[i];
+	}
+	qsort((void const **)sorted, unused_index, sizeof(struct fileinfo*), compare_name);
 }
 
 static void extractfiles_fromdir(char const *dirname)
@@ -278,6 +310,7 @@ static void print_dir(char const *name)
 			addfiles_slots(next->d_name, name);
 	}
 
+	sortfiles_slots();
 	closedir(dirp);
 	printfiles_slots();
 }
@@ -298,8 +331,14 @@ int main(int argc, char *argv[])
 	init_slots();
 	init_list();
 	alloc_count = ALLOCATE_COUNT;
+
 	files = malloc (alloc_count * (sizeof *files));
 	if(!files) {
+		file_failure(ALLOCATION_FAILURE, NULL);
+		exit(ALLOCATION_FAILURE);
+	}
+	sorted = malloc(alloc_count *(sizeof *sorted));
+	if(!sorted) {
 		file_failure(ALLOCATION_FAILURE, NULL);
 		exit(ALLOCATION_FAILURE);
 	}
@@ -312,6 +351,7 @@ int main(int argc, char *argv[])
 	}
 
 	if(unused_index) {
+		sortfiles_slots();
 		extractfiles_fromdir(NULL);
 	}
 	printfiles_slots();
