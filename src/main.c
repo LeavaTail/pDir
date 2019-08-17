@@ -64,7 +64,6 @@ static int decode_cmdline(int argc, char **argv)
 {
 	int longindex = 0;
 	int opt = 0;
-	int i;
 
 	while((opt = getopt_long(argc, argv,
 		"a",
@@ -79,11 +78,6 @@ static int decode_cmdline(int argc, char **argv)
 			default:
 				usage(CMDLINE_FAILURE);
 		}
-	}
-
-	init_list();
-	for(i = optind; i < argc; i++) {
-		add_list(argv[i], strlen(argv[i]));
 	}
 
 	return optind;
@@ -243,6 +237,7 @@ int main(int argc, char *argv[])
 	n_files = argc - optind;
 
 	init_slots();
+	init_list();
 	alloc_count = ALLOCATE_COUNT;
 	files = malloc (alloc_count * (sizeof *files));
 	if(!files) {
@@ -258,6 +253,7 @@ int main(int argc, char *argv[])
 	}
 
 	printfiles_slots();
+	clean_list();
 	clean_slots();
 	return 0;
 }
