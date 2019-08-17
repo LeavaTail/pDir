@@ -156,13 +156,13 @@ static int addfiles_slots(char const *name, char const *dirname)
 	struct fileinfo *finfo;
 
 	if(alloc_count <= unused_index) {
-		files = realloc(files, alloc_count+=ALLOCATE_COUNT);
+		alloc_count += ALLOCATE_COUNT;
+		files = realloc(files, alloc_count);
 		if(!files) {
 			file_failure(ALLOCATION_FAILURE, NULL);
 			free(files);
 			exit(ALLOCATION_FAILURE);
 		}
-		alloc_count += ALLOCATE_COUNT;
 	}
 	finfo = &files[unused_index];
 	memset(finfo, '\0', sizeof *finfo);
