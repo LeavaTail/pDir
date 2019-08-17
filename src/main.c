@@ -95,13 +95,13 @@ static void joinpath(char *dest, const char *dirname, const char *name)
 		while(*dirname){
 			*dest++ = *dirname++;
 		}
-		printf("\n");
 		if(dest[-1] != '/')
 			*dest++ = '/';
 	}
 	while(*name){
 		*dest++ = *name++;
 	}
+	*dest = '\0';
 }
 
 /**
