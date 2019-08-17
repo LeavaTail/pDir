@@ -39,14 +39,14 @@ void usage(int status)
 	exit(status);
 }
 
-static void file_failure (int status, char const *filename)
+static void file_failure (int status, char const *name)
 {
 	switch(status){
 		case ALLOCATION_FAILURE:
 			error(status, _("%s: cannot allocate memory"), PROGRAM_NAME);
 			break;
 		case ACCESS_FAILURE:
-			error(status, _("%s: cannot access '%s'"), PROGRAM_NAME, filename);
+			error(status, _("%s: cannot access '%s'"), PROGRAM_NAME, name);
 			break;
 	}
 }
@@ -89,6 +89,21 @@ static int decode_cmdline(int argc, char **argv)
 	return optind;
 }
 
+static void joinpath(char *dest, const char *dirname, const char *name)
+{
+	if(dirname[0] != '.' || dirname[1] != '\0') {
+		while(*dirname){
+			*dest++ = *dirname++;
+		}
+		printf("\n");
+		if(dest[-1] != '/')
+			*dest++ = '/';
+	}
+	while(*name){
+		*dest++ = *name++;
+	}
+}
+
 /**
  * struct fileinfo - File information.
  * @name:   File name
@@ -125,7 +140,7 @@ static void init_slots()
  * Return: 0 - success
  *         otherwise - error(show ERROR STATUS CODE)
  */
-static int addfiles_slots(char const *name)
+static int addfiles_slots(char const *name, char const *dirname)
 {
 	int err = 0;
 	struct fileinfo *finfo;
@@ -142,19 +157,27 @@ static int addfiles_slots(char const *name)
 	finfo = &files[unused_index];
 	memset(finfo, '\0', sizeof *finfo);
 
-	err = lstat(name, &finfo->status);
+	char *path;
+	if(name[0] == '/' || dirname[0] == '\0') {
+		path = (char *)name;
+	} else {
+		path = alloca(strlen(name) + strlen(dirname) + 2);
+		joinpath(path, dirname, name);
+	}
+
+	err = lstat(path, &finfo->status);
 	if(err) {
-		file_failure(ACCESS_FAILURE, name);
+		file_failure(ACCESS_FAILURE, path);
 		goto errout;
 	}
 
-	finfo->name = malloc((strlen(name)+1) * sizeof *name);
+	finfo->name = malloc((strlen(path)+1) * sizeof *path);
 	if(!finfo->name) {
 		file_failure(ALLOCATION_FAILURE, NULL);
 		err = ALLOCATION_FAILURE;
 		goto errout;
 	}
-	strncpy(finfo->name, name, strlen(name)+1);
+	strncpy(finfo->name, path, strlen(path)+1);
 
 	unused_index++;
 errout:
@@ -228,10 +251,10 @@ int main(int argc, char *argv[])
 	}
 
 	if(n_files <= 0) {
-		addfiles_slots(".");
+		addfiles_slots(".", "");
 	} else {
 		for(i = optind; i < argc; i++)
-			addfiles_slots(argv[i]);
+			addfiles_slots(argv[i], "");
 	}
 
 	printfiles_slots();
