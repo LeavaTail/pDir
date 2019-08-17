@@ -274,7 +274,8 @@ static void print_dir(char const *name)
 
 	clear_slots();
 	while((next = readdir(dirp)) != NULL) {
-		addfiles_slots(next->d_name, name);
+		if(!dot_or_ddot(next->d_name) || print_all )
+			addfiles_slots(next->d_name, name);
 	}
 
 	closedir(dirp);
