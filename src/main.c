@@ -11,18 +11,11 @@
 #include <limits.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include "pdir.h"
 #include "gettext.h"
 #include "error.h"
 #include "list.h"
 #define _(String) gettext (String)
-#define PROGRAM_NAME	"pdir"
-
-#define ALLOCATION_FAILURE	1
-#define CMDLINE_FAILURE	2
-#define ACCESS_FAILURE	3
-#define OPENDIRECTRY_FAILURE	4
-
-#define ALLOCATE_COUNT	100
 
 #define GETOPT_HELP_CHAR	(CHAR_MIN - 2)
 
@@ -125,16 +118,6 @@ static bool file_ignored(char const *name)
 {
 	return (!print_all && (dot_or_ddot(name) || name[0] == '.'));
 }
-
-/**
- * struct fileinfo - File information.
- * @name:   File name
- * @status: File status
- */
-struct fileinfo {
-	char *name;
-	struct stat status;
-};
 
 //! File information slots
 static struct fileinfo *files;
