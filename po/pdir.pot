@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pdir 0.1\n"
 "Report-Msgid-Bugs-To: starbow.duster@gmail.com\n"
-"POT-Creation-Date: 2019-08-18 00:12+0900\n"
+"POT-Creation-Date: 2019-08-18 15:09+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,22 +17,22 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/main.c:32
+#: src/main.c:47
 #, c-format
 msgid "Usage: %s [OPTION]... [FILE]...\n"
 msgstr ""
 
-#: src/main.c:42
+#: src/main.c:62
 #, c-format
 msgid "%s: cannot allocate memory"
 msgstr ""
 
-#: src/main.c:45
+#: src/main.c:65
 #, c-format
 msgid "%s: cannot access '%s'"
 msgstr ""
 
-#: src/main.c:48
+#: src/main.c:68
 #, c-format
 msgid "%s: cannot open directory '%s'"
 msgstr ""

@@ -1,7 +1,8 @@
-/*
- * main.c
- *
- * Print Directory entry (like 'ls').
+/**
+ * @file main.c
+ * @brief Print Directory entry (like 'ls').
+ * @author LeavaTail
+ * @date 2019/08/18
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -15,10 +16,24 @@
 #include "gettext.h"
 #include "error.h"
 #include "list.h"
+
+/**
+ * Be written to support message catalogs
+ * HOW TO USE
+ *   printf(_(MESSAGE));
+ *   perror(_(MESSAGE));
+ */
 #define _(String) gettext (String)
 
+/**
+ * Special Option(no short option)
+ */
 #define GETOPT_HELP_CHAR	(CHAR_MIN - 2)
 
+/**
+ * usage - print out usage.
+ * @status: Status code
+ */
 void usage(int status)
 {
 	FILE *out;
@@ -35,6 +50,11 @@ void usage(int status)
 	exit(status);
 }
 
+/**
+ * file_failure - MESSAGE to report the failure to access a file named FILE
+ * @status: Status code
+ * @name:   File name
+ */
 static void file_failure (int status, char const *name)
 {
 	switch(status){
@@ -50,18 +70,10 @@ static void file_failure (int status, char const *name)
 	}
 }
 
-static inline bool dot_or_ddot(char const *name)
-{
-	bool ret = false;
-	if (name != NULL && name[0] == '.') {
-		char sep = name[(name[1] == '.') + 1];
-		ret = (!sep || sep == '/');
-	}
-	return ret;
-}
-
+//! "-a" option. print out include "." AND ".." AND ".FILENAME"
 static bool print_all;
 
+//! option data {"long name", needs argument, flags, "short name"}
 static struct option const longopts[] =
 {
 	{"all", no_argument, NULL, 'a'},
@@ -69,6 +81,13 @@ static struct option const longopts[] =
 	{0,0,0,0}
 };
 
+/**
+ * decode_cmdline - analyze command-line arguments.
+ * @argc: command-line argument count
+ * @argv: commend-line arfument vector
+ *
+ * Return: index of the first non-option argument
+ */
 static int decode_cmdline(int argc, char **argv)
 {
 	int longindex = 0;
@@ -92,6 +111,12 @@ static int decode_cmdline(int argc, char **argv)
 	return optind;
 }
 
+/**
+ * joinpath - put DIRNAME/NAME into DEST, handling "." and "/" properly.
+ * @dest   : Retult pathname
+ * @dirname: Base direcotry name
+ * @name   : File name
+ */
 static void joinpath(char *dest, const char *dirname, const char *name)
 {
 	if(dirname[0] != '.' || dirname[1] != '\0') {
@@ -105,6 +130,55 @@ static void joinpath(char *dest, const char *dirname, const char *name)
 		*dest++ = *name++;
 	}
 	*dest = '\0';
+}
+
+/**
+ * dot_or_ddot - Check whether File name is "." OR ".."
+ * @name:   File name
+ *
+ * Return: true  - File name is "." OR ".."
+ *         false - File name is Regular file
+ */
+static inline bool dot_or_ddot(char const *name)
+{
+	bool ret = false;
+	if (name != NULL && name[0] == '.') {
+		char sep = name[(name[1] == '.') + 1];
+		ret = (!sep || sep == '/');
+	}
+	return ret;
+}
+
+/**
+ * COMPARE RESULT compare(a, b);
+ *  -1: *a is earlier than *b
+ *   1: *a is later than *b
+ */
+#define COMPARE_EARLIER	-1
+#define COMPARE_LATER	1
+/**
+ * compare_name - Compare filename (Dirname > Filename)
+ * @a:   fileinfo pointer
+ * @b:   fileinfo pointer
+ *
+ * Return:  1 - earlier than
+ *         -1 - later than
+ *          0 - equal to
+ */
+static int compare_name(const void *a, const void *b)
+{
+	struct fileinfo *ai = *(struct fileinfo**)a;
+	struct fileinfo *bi = *(struct fileinfo**)b;
+
+	if(((ai->status.st_mode & S_IFMT) == S_IFDIR)
+	&& ((bi->status.st_mode & S_IFMT) != S_IFDIR))
+		return COMPARE_EARLIER;
+
+	if(((ai->status.st_mode & S_IFMT) != S_IFDIR)
+	&& ((bi->status.st_mode & S_IFMT) == S_IFDIR))
+		return COMPARE_LATER;
+
+	return strcmp(ai->name, bi->name);
 }
 
 /**
@@ -127,21 +201,6 @@ static struct fileinfo **sorted;
 static size_t alloc_count;
 //! index of first unused `fileinfo` count in slots
 static size_t unused_index;
-
-static int compare_name(const void *a, const void *b)
-{
-	struct fileinfo *ai = *(struct fileinfo**)a;
-	struct fileinfo *bi = *(struct fileinfo**)b;
-
-	if(((ai->status.st_mode & S_IFMT) == S_IFDIR)
-	&& ((bi->status.st_mode & S_IFMT) != S_IFDIR))
-		return -1;
-
-	if(((ai->status.st_mode & S_IFMT) != S_IFDIR)
-	&& ((bi->status.st_mode & S_IFMT) == S_IFDIR))
-		return 1;
-	return strcmp(ai->name, bi->name);
-}
 
 /**
  * init_slots - Initialize File information slots
@@ -267,6 +326,9 @@ static void clean_slots()
 	free(files);
 }
 
+/**
+ * sortfiles_slots - sort files now in the file information slots
+ */
 static void sortfiles_slots()
 {
 	int i;
@@ -276,6 +338,10 @@ static void sortfiles_slots()
 	qsort((void const **)sorted, unused_index, sizeof(struct fileinfo*), compare_name);
 }
 
+/**
+ * extractfiles_fromdir - Remove directory and set directory entries
+ * @dirname: Base direcotry name
+ */
 static void extractfiles_fromdir(char const *dirname)
 {
 	int i;
@@ -288,6 +354,10 @@ static void extractfiles_fromdir(char const *dirname)
 	}
 }
 
+/**
+ * print_dir - Read directory name, and list the files in it.
+ * @name: Base direcotry name
+ */
 static void print_dir(char const *name)
 {
 	DIR *dirp;
