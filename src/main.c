@@ -29,6 +29,7 @@
  * Special Option(no short option)
  */
 #define GETOPT_HELP_CHAR	(CHAR_MIN - 2)
+#define GETOPT_VERSION_CHAR	(CHAR_MIN - 3)
 
 /**
  * usage - print out usage.
@@ -70,6 +71,26 @@ static void file_failure (int status, char const *name)
 	}
 }
 
+/**
+ * version - print out program version.
+ * @command_name: command name
+ * @version:      program version
+ * @author:       program authoer
+ */
+void version(const char *command_name, const char *version,
+			const char *author)
+{
+	FILE *out = stdout;
+
+	fprintf(out, "%s %s\n", command_name, version);
+	fprintf(out, "Copyright (C) %s Free Software Foundation, Inc.", COPYRIGHT_YEAR);
+	fputs("\n\
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n\
+This is free software: you are free to change and redistribute it.\n\
+There is NO WARRANTY, to the extent permitted by law.\n\n", out);
+	fprintf (out, _("Written by %s.\n"), PROGRAM_AUTHOR);
+}
+
 //! "-a" option. print out include "." AND ".." AND ".FILENAME"
 static bool print_all;
 
@@ -78,6 +99,7 @@ static struct option const longopts[] =
 {
 	{"all", no_argument, NULL, 'a'},
 	{"help",no_argument, NULL, GETOPT_HELP_CHAR},
+	{"version",no_argument, NULL, GETOPT_VERSION_CHAR},
 	{0,0,0,0}
 };
 
@@ -102,6 +124,10 @@ static int decode_cmdline(int argc, char **argv)
 				break;
 			case GETOPT_HELP_CHAR:
 				usage(EXIT_SUCCESS);
+				break;
+			case GETOPT_VERSION_CHAR:
+				version(PROGRAM_NAME, PROGRAM_VERSION, PROGRAM_AUTHOR);
+				exit(EXIT_SUCCESS);
 				break;
 			default:
 				usage(CMDLINE_FAILURE);

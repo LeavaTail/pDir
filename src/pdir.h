@@ -2,11 +2,13 @@
 #define _PDIR_H
 
 /**
- * Program Name.
- * displayed when 'usage'
+ * Program Name, version, author.
+ * displayed when 'usage' and 'version'
  */
 #define PROGRAM_NAME	"pdir"
-
+#define PROGRAM_VERSION	"0.1"
+#define PROGRAM_AUTHOR	"LeavaTail"
+#define COPYRIGHT_YEAR	"2019"
 /**
  * Debug code
  */

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pDir 0.1\n"
 "Report-Msgid-Bugs-To: starbow.duster@gmail.com\n"
-"POT-Creation-Date: 2019-08-18 15:09+0900\n"
+"POT-Creation-Date: 2019-08-18 21:43+0900\n"
 "PO-Revision-Date: 2019-08-06 00:50+0900\n"
 "Last-Translator: LeavaTail <starbow.duster@gmail.com>\n"
 "Language-Team: Japanese\n"
@@ -18,22 +18,27 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
 
-#: src/main.c:47
+#: src/main.c:48
 #, c-format
 msgid "Usage: %s [OPTION]... [FILE]...\n"
 msgstr "使用法: %s [オプション]... [ファイル]...\n"
 
-#: src/main.c:62
+#: src/main.c:63
 #, c-format
 msgid "%s: cannot allocate memory"
 msgstr "%s: メモリを確保できません"
 
-#: src/main.c:65
+#: src/main.c:66
 #, c-format
 msgid "%s: cannot access '%s'"
 msgstr "%s: '%s' にアクセスできません"
 
-#: src/main.c:68
+#: src/main.c:69
 #, c-format
 msgid "%s: cannot open directory '%s'"
 msgstr "%s: '%s' にアクセスできません"
+
+#: src/main.c:89
+#, c-format
+msgid "Written by %s.\n"
+msgstr "作者 %s。\n"
