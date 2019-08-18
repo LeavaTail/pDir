@@ -29,10 +29,13 @@
  *  3: file cannot open
  *  4: directory cannot open
  */
-#define ALLOCATION_FAILURE	1
-#define CMDLINE_FAILURE	2
-#define ACCESS_FAILURE	3
-#define OPENDIRECTRY_FAILURE	4
+enum
+{
+	ALLOCATION_FAILURE = 1,
+	CMDLINE_FAILURE = 2,
+	ACCESS_FAILURE = 3,
+	OPENDIRECTRY_FAILURE = 4
+};
 
 /**
  * Count of allocation memory in slots.

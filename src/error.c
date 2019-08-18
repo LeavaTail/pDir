@@ -12,7 +12,10 @@
  * ERROR STATUS CODE
  *  1: allocation failed(malloc)
  */
-#define ALLOCATION_FAILURE	1
+enum
+{
+	ALLOCATION_FAILURE = 1
+};
 
 /**
  * error - Output error message
@@ -26,14 +29,14 @@ void error(int status, const char *message, ...)
 	char *buffer;
 
 	va_start (args, message);
-	// calculate variable message length
+	/* calculate variable message length */
 	va_copy(copy, args);
 	length = vsnprintf(NULL, 0, message, copy);
 
-	// store variable message to string
+	/* store variable message to string */
 	buffer = malloc((length + 1) * sizeof(char));
-	if(buffer) {
-		vsnprintf(buffer, length+1, message, args);
+	if (buffer) {
+		vsnprintf(buffer, length + 1, message, args);
 		perror(buffer);
 
 		free(buffer);

@@ -28,8 +28,11 @@
 /**
  * Special Option(no short option)
  */
-#define GETOPT_HELP_CHAR	(CHAR_MIN - 2)
-#define GETOPT_VERSION_CHAR	(CHAR_MIN - 3)
+enum
+{
+	GETOPT_HELP_CHAR = (CHAR_MIN - 2),
+	GETOPT_VERSION_CHAR = (CHAR_MIN - 3)
+};
 
 /**
  * usage - print out usage.
@@ -38,15 +41,15 @@
 void usage(int status)
 {
 	FILE *out;
-	switch(status) {
-		case CMDLINE_FAILURE:
-			out = stderr;
-			break;
-		default:
-			out = stdout;
+	switch (status) {
+	case CMDLINE_FAILURE:
+		out = stderr;
+		break;
+	default:
+		out = stdout;
 	}
 	fprintf(out, _("Usage: %s [OPTION]... [FILE]...\n"),
-			PROGRAM_NAME);
+										PROGRAM_NAME);
 
 	exit(status);
 }
@@ -58,16 +61,16 @@ void usage(int status)
  */
 static void file_failure (int status, char const *name)
 {
-	switch(status){
-		case ALLOCATION_FAILURE:
-			error(status, _("%s: cannot allocate memory"), PROGRAM_NAME);
-			break;
-		case ACCESS_FAILURE:
-			error(status, _("%s: cannot access '%s'"), PROGRAM_NAME, name);
-			break;
-		case OPENDIRECTRY_FAILURE:
-			error(status, _("%s: cannot open directory '%s'"), PROGRAM_NAME, name);
-			break;
+	switch (status) {
+	case ALLOCATION_FAILURE:
+		error(status, _("%s: cannot allocate memory"), PROGRAM_NAME);
+		break;
+	case ACCESS_FAILURE:
+		error(status, _("%s: cannot access '%s'"), PROGRAM_NAME, name);
+		break;
+	case OPENDIRECTRY_FAILURE:
+		error(status, _("%s: cannot open directory '%s'"), PROGRAM_NAME, name);
+		break;
 	}
 }
 
@@ -83,7 +86,8 @@ void version(const char *command_name, const char *version,
 	FILE *out = stdout;
 
 	fprintf(out, "%s %s\n", command_name, version);
-	fprintf(out, "Copyright (C) %s Free Software Foundation, Inc.", COPYRIGHT_YEAR);
+	fprintf(out, "Copyright (C) %s Free Software Foundation, Inc.",
+													COPYRIGHT_YEAR);
 	fputs("\n\
 License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.\n\
 This is free software: you are free to change and redistribute it.\n\
@@ -91,10 +95,10 @@ There is NO WARRANTY, to the extent permitted by law.\n\n", out);
 	fprintf (out, _("Written by %s.\n"), PROGRAM_AUTHOR);
 }
 
-//! "-a" option. print out include "." AND ".." AND ".FILENAME"
+/* "-a" option. print out include "." AND ".." AND ".FILENAME" */
 static bool print_all;
 
-//! option data {"long name", needs argument, flags, "short name"}
+/* option data {"long name", needs argument, flags, "short name"} */
 static struct option const longopts[] =
 {
 	{"all", no_argument, NULL, 'a'},
@@ -115,22 +119,22 @@ static int decode_cmdline(int argc, char **argv)
 	int longindex = 0;
 	int opt = 0;
 
-	while((opt = getopt_long(argc, argv,
+	while ((opt = getopt_long(argc, argv,
 		"a",
 		longopts, &longindex)) != -1) {
-		switch(opt) {
-			case 'a':
-				print_all = true;
-				break;
-			case GETOPT_HELP_CHAR:
-				usage(EXIT_SUCCESS);
-				break;
-			case GETOPT_VERSION_CHAR:
-				version(PROGRAM_NAME, PROGRAM_VERSION, PROGRAM_AUTHOR);
-				exit(EXIT_SUCCESS);
-				break;
-			default:
-				usage(CMDLINE_FAILURE);
+		switch (opt) {
+		case 'a':
+			print_all = true;
+			break;
+		case GETOPT_HELP_CHAR:
+			usage(EXIT_SUCCESS);
+			break;
+		case GETOPT_VERSION_CHAR:
+			version(PROGRAM_NAME, PROGRAM_VERSION, PROGRAM_AUTHOR);
+			exit(EXIT_SUCCESS);
+			break;
+		default:
+			usage(CMDLINE_FAILURE);
 		}
 	}
 
@@ -145,16 +149,15 @@ static int decode_cmdline(int argc, char **argv)
  */
 static void joinpath(char *dest, const char *dirname, const char *name)
 {
-	if(dirname[0] != '.' || dirname[1] != '\0') {
-		while(*dirname){
+	if (dirname[0] != '.' || dirname[1] != '\0') {
+		while (*dirname)
 			*dest++ = *dirname++;
-		}
-		if(dest[-1] != '/')
+		if (dest[-1] != '/')
 			*dest++ = '/';
 	}
-	while(*name){
+
+	while (*name)
 		*dest++ = *name++;
-	}
 	*dest = '\0';
 }
 
@@ -180,8 +183,11 @@ static inline bool dot_or_ddot(char const *name)
  *  -1: *a is earlier than *b
  *   1: *a is later than *b
  */
-#define COMPARE_EARLIER	-1
-#define COMPARE_LATER	1
+enum
+{
+	COMPARE_EARLIER = -1,
+	COMPARE_LATER = 1
+};
 /**
  * compare_name - Compare filename (Dirname > Filename)
  * @a:   fileinfo pointer
@@ -196,11 +202,11 @@ static int compare_name(const void *a, const void *b)
 	struct fileinfo *ai = *(struct fileinfo**)a;
 	struct fileinfo *bi = *(struct fileinfo**)b;
 
-	if(((ai->status.st_mode & S_IFMT) == S_IFDIR)
+	if (((ai->status.st_mode & S_IFMT) == S_IFDIR)
 	&& ((bi->status.st_mode & S_IFMT) != S_IFDIR))
 		return COMPARE_EARLIER;
 
-	if(((ai->status.st_mode & S_IFMT) != S_IFDIR)
+	if (((ai->status.st_mode & S_IFMT) != S_IFDIR)
 	&& ((bi->status.st_mode & S_IFMT) == S_IFDIR))
 		return COMPARE_LATER;
 
@@ -219,13 +225,11 @@ static bool file_ignored(char const *name)
 	return (!print_all && (dot_or_ddot(name) || name[0] == '.'));
 }
 
-//! File information slots
+/* File information slots */
 static struct fileinfo *files;
-//! sorted File information slots
 static struct fileinfo **sorted;
-//! allocate `fileinfo` count in slots
+/* allocate `fileinfo` count in slots, index of first unused */
 static size_t alloc_count;
-//! index of first unused `fileinfo` count in slots
 static size_t unused_index;
 
 /**
@@ -233,7 +237,7 @@ static size_t unused_index;
  *
  * File information slots initialize.(allocation count, index,...)
  */
-static void init_slots()
+static void init_slots(void)
 {
 	alloc_count = 0;
 	unused_index = 0;
@@ -251,26 +255,26 @@ static int addfiles_slots(char const *name, char const *dirname)
 	int err = 0;
 	struct fileinfo *finfo;
 
-	if(alloc_count <= unused_index) {
+	if (alloc_count <= unused_index) {
 		alloc_count += ALLOCATE_COUNT;
 		files = realloc(files, alloc_count);
-		if(!files) {
+		if (!files) {
 			file_failure(ALLOCATION_FAILURE, NULL);
 			free(files);
 			exit(ALLOCATION_FAILURE);
 		}
 		sorted = realloc(sorted, alloc_count);
-		if(!sorted) {
+		if (!sorted) {
 			file_failure(ALLOCATION_FAILURE, NULL);
 			free(sorted);
 			exit(ALLOCATION_FAILURE);
 		}
 	}
 	finfo = &files[unused_index];
-	memset(finfo, '\0', sizeof *finfo);
+	memset(finfo, '\0', sizeof(*finfo));
 
 	char *path;
-	if(name[0] == '/' || dirname[0] == '\0') {
+	if (name[0] == '/' || dirname[0] == '\0') {
 		path = (char *)name;
 	} else {
 		path = alloca(strlen(name) + strlen(dirname) + 2);
@@ -278,18 +282,18 @@ static int addfiles_slots(char const *name, char const *dirname)
 	}
 
 	err = lstat(path, &finfo->status);
-	if(err) {
+	if (err) {
 		file_failure(ACCESS_FAILURE, path);
 		goto errout;
 	}
 
-	finfo->name = malloc((strlen(name)+1) * sizeof *name);
-	if(!finfo->name) {
+	finfo->name = malloc((strlen(name) + 1) * sizeof(*name));
+	if (!finfo->name) {
 		file_failure(ALLOCATION_FAILURE, NULL);
 		err = ALLOCATION_FAILURE;
 		goto errout;
 	}
-	strncpy(finfo->name, name, strlen(path)+1);
+	strncpy(finfo->name, name, strlen(path) + 1);
 
 	unused_index++;
 errout:
@@ -306,9 +310,9 @@ errout:
 static size_t __printfiles_slots(FILE *out, const struct fileinfo *f)
 {
 	size_t len = 0;
-	const char* name = f->name;
+	const char *name = f->name;
 
-	if(out != NULL)
+	if (out != NULL)
 		len = fwrite(name, sizeof(char), strlen(name), out);
 	return len;
 }
@@ -316,11 +320,11 @@ static size_t __printfiles_slots(FILE *out, const struct fileinfo *f)
 /**
  * printfiles_slots - List all the files in slots
  */
-static void printfiles_slots()
+static void printfiles_slots(void)
 {
 	int i;
 
-	for(i = 0; i < unused_index; i++) {
+	for (i = 0; i < unused_index; i++) {
 		__printfiles_slots(stdout, sorted[i]);
 		putchar('\n');
 	}
@@ -331,12 +335,11 @@ static void printfiles_slots()
  *
  * WARN: files slots will not release.
  */
-static void clear_slots()
+static void clear_slots(void)
 {
 	int i;
-	for(i = unused_index; i >= 0;  i--, unused_index--) {
+	for (i = unused_index; i >= 0;  i--, unused_index--)
 		free(files[i].name);
-	}
 	unused_index = 0;
 }
 
@@ -345,7 +348,7 @@ static void clear_slots()
  *
  * WARN: Be sure clean up list when use slots.
  */
-static void clean_slots()
+static void clean_slots(void)
 {
 	clear_slots();
 	free(sorted);
@@ -355,13 +358,13 @@ static void clean_slots()
 /**
  * sortfiles_slots - sort files now in the file information slots
  */
-static void sortfiles_slots()
+static void sortfiles_slots(void)
 {
 	int i;
-	for(i = 0 ; i < unused_index; i++) {
+	for (i = 0 ; i < unused_index; i++)
 		sorted[i] = &files[i];
-	}
-	qsort((void const **)sorted, unused_index, sizeof(struct fileinfo*), compare_name);
+	qsort((void const **)sorted, unused_index, sizeof(struct fileinfo*),
+															compare_name);
 }
 
 /**
@@ -371,12 +374,11 @@ static void sortfiles_slots()
 static void extractfiles_fromdir(char const *dirname)
 {
 	int i;
-	for(i = unused_index; i-- > 0; ) {
+	for (i = unused_index; i-- > 0; ) {
 		struct fileinfo f = files[i];
 
-		if(((f.status.st_mode & S_IFMT) == S_IFDIR)){
+		if (((f.status.st_mode & S_IFMT) == S_IFDIR))
 			add_list(f.name, strlen(f.name));
-		}
 	}
 }
 
@@ -390,14 +392,14 @@ static void print_dir(char const *name)
 	struct dirent *next;
 
 	dirp = opendir(name);
-	if(!dirp) {
+	if (!dirp) {
 		file_failure(OPENDIRECTRY_FAILURE, name);
 		return;
 	}
 
 	clear_slots();
-	while((next = readdir(dirp)) != NULL) {
-		if(!file_ignored(next->d_name))
+	while ((next = readdir(dirp)) != NULL) {
+		if (!file_ignored(next->d_name))
 			addfiles_slots(next->d_name, name);
 	}
 
@@ -423,33 +425,33 @@ int main(int argc, char *argv[])
 	init_list();
 	alloc_count = ALLOCATE_COUNT;
 
-	files = malloc (alloc_count * (sizeof *files));
-	if(!files) {
+	files = malloc (alloc_count * (sizeof(*files)));
+	if (!files) {
 		file_failure(ALLOCATION_FAILURE, NULL);
 		exit(ALLOCATION_FAILURE);
 	}
-	sorted = malloc(alloc_count *(sizeof *sorted));
-	if(!sorted) {
+	sorted = malloc(alloc_count * (sizeof(sorted)));
+	if (!sorted) {
 		file_failure(ALLOCATION_FAILURE, NULL);
 		exit(ALLOCATION_FAILURE);
 	}
 
-	if(n_files <= 0) {
+	if (n_files <= 0) {
 		addfiles_slots(".", "");
 	} else {
-		for(i = optind; i < argc; i++)
+		for (i = optind; i < argc; i++)
 			addfiles_slots(argv[i], "");
 	}
 
-	if(unused_index) {
+	if (unused_index) {
 		sortfiles_slots();
 		extractfiles_fromdir(NULL);
 	}
 	printfiles_slots();
 
-	while(get_listcount()) {
+	while (get_listcount()) {
 		size_t len = get_length();
-		char* dirname = malloc(len * sizeof(char));
+		char *dirname = malloc(len * sizeof(char));
 		get_list(dirname, len);
 		print_dir(dirname);
 		free(dirname);

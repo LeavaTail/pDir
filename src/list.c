@@ -20,9 +20,12 @@
  *  2: refer to none linked-list
  *  3: argument pointer is illegal
  */
-#define ALLOCATION_FAILURE	1
-#define GETNONE_FAILURE	2
-#define ILLEGAL_ARGUMENT_FAILURE	3
+enum
+{
+	ALLOCATION_FAILURE = 1,
+	GETNONE_FAILURE = 2,
+	ILLEGAL_ARGUMENT_FAILURE = 3
+};
 
 /**
  * struct __list_head - Bidirectional linked list.
@@ -58,10 +61,10 @@ typedef struct __list_head
 	for (pos = (head)->prev; pos != head; pos = pos->prev)
 
 
-//! linked list head pointer
+/* linked list head pointer */
 static list_head *head;
 
-//! linked-list data count
+/* linked-list data count */
 static size_t count;
 
 /**
@@ -70,10 +73,10 @@ static size_t count;
  * linked-list `head` Initialize.(allocation, next/prev pointer set)
  * If Failure allocation, cause normal process termination.
  */
-void init_list()
+void init_list(void)
 {
 	list_head *dummy = malloc(sizeof(*dummy));
-	if(!dummy) {
+	if (!dummy) {
 		perror("Initialize linked-list");
 		exit(ALLOCATION_FAILURE);
 	}
@@ -97,34 +100,34 @@ int add_list(void *d, size_t l)
 {
 	int ret = 0;
 	list_head *new = malloc(sizeof(*new));
-	if(!new) {
+	if (!new) {
 		perror("Add linked-list `list`");
 		ret = ALLOCATION_FAILURE;
-		goto end;
+		goto out;
 	}
 
 	new->data = malloc(l);
-	if(!new->data) {
+	if (!new->data) {
 		perror("Add linked-list `data`");
 		ret = ALLOCATION_FAILURE;
 		goto failed_alloc;
 	}
 
-	// Set data myself
+	/* Set data myself */
 	new->data = d ? memcpy(new->data, d, l) : NULL;
 	new->len = l;
 	new->next = head->next;
 	new->prev = head;
 
-	// Update data previous/next
+	/* Update data previous/next */
 	head->next->prev = new;
 	head->next = new;
 	count++;
-	goto end;
+	goto out;
 
 failed_alloc:
 	free(new);
-end:
+out:
 	return ret;
 }
 
@@ -134,7 +137,7 @@ end:
  * clean up linked-list.
  * WARN: Be sure clean up list when use linked list.
  */
-void clean_list()
+void clean_list(void)
 {
 	list_head *cursor;
 	list_for_each(cursor, head) {
@@ -152,7 +155,7 @@ void clean_list()
  * Return: 0 - no list
  *         otherwise - first data length
  */
-size_t get_length()
+size_t get_length(void)
 {
 	return count > 0 ? head->prev->len : 0;
 }
@@ -162,7 +165,7 @@ size_t get_length()
  *
  * Return: count of linked-list data
  */
-size_t get_listcount()
+size_t get_listcount(void)
 {
 	return count;
 }
@@ -186,14 +189,14 @@ int get_list(void *d, size_t l)
 	list_head *list;
 	size_t size;
 
-	if(count <= 0) {
+	if (count <= 0) {
 		ret = GETNONE_FAILURE;
-		goto end;
+		goto out;
 	}
 
-	if(!d) {
+	if (!d) {
 		ret = ILLEGAL_ARGUMENT_FAILURE;
-		goto end;
+		goto out;
 	}
 
 	list = head->prev;
@@ -207,6 +210,6 @@ int get_list(void *d, size_t l)
 	free(list);
 	count--;
 
-end:
+out:
 	return ret;
 }
