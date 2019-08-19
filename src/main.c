@@ -97,6 +97,12 @@ There is NO WARRANTY, to the extent permitted by law.\n\n", out);
 
 /* "-a" option. print out include "." AND ".." AND ".FILENAME" */
 static bool print_all;
+/* File information slots */
+static struct fileinfo *files;
+static struct fileinfo **sorted;
+/* allocate `fileinfo` count in slots, index of first unused */
+static size_t alloc_count;
+static size_t unused_index;
 
 /* option data {"long name", needs argument, flags, "short name"} */
 static struct option const longopts[] =
@@ -224,13 +230,6 @@ static bool file_ignored(char const *name)
 {
 	return (!print_all && (dot_or_ddot(name) || name[0] == '.'));
 }
-
-/* File information slots */
-static struct fileinfo *files;
-static struct fileinfo **sorted;
-/* allocate `fileinfo` count in slots, index of first unused */
-static size_t alloc_count;
-static size_t unused_index;
 
 /**
  * init_slots - Initialize File information slots
