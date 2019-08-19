@@ -245,12 +245,15 @@ static void init_slots(void)
 
 /**
  * addfiles_slots - Add a File information to slots
- * @name:   File name
+ * @name:    File name
+ * @dirname: Base direcotry name
+ * @command_line_arg: Command line argument
  *
  * Return: 0 - success
  *         otherwise - error(show ERROR STATUS CODE)
  */
-static int addfiles_slots(char const *name, char const *dirname)
+static int addfiles_slots(char const *name, char const *dirname,
+						bool command_arg)
 {
 	int err = 0;
 	struct fileinfo *finfo;
@@ -294,6 +297,7 @@ static int addfiles_slots(char const *name, char const *dirname)
 		goto errout;
 	}
 	strncpy(finfo->name, name, strlen(name) + 1);
+	finfo->is_command_arg = command_arg;
 
 	unused_index++;
 errout:
@@ -373,13 +377,26 @@ static void sortfiles_slots(void)
  */
 static void extractfiles_fromdir(char const *dirname)
 {
-	int i;
+	int i, j;
 	for (i = 0; i < unused_index; i++) {
 		struct fileinfo *f = sorted[i];
 
 		if (((f->status.st_mode & S_IFMT) == S_IFDIR))
 			add_list(f->name, strlen(f->name) + 1);
 	}
+
+	for (i = 0, j = 0; i < unused_index; i++)
+	{
+		bool is_command_arg_direcory;
+		struct fileinfo *f = sorted[i];
+		sorted[j] = f;
+		is_command_arg_direcory = f->is_command_arg &&
+							((f->status.st_mode & S_IFMT) == S_IFDIR);
+		j += !(is_command_arg_direcory);
+		if (is_command_arg_direcory)
+			free(f->name);
+	}
+	unused_index = j;
 }
 
 /**
@@ -390,6 +407,7 @@ static void print_dir(char const *name)
 {
 	DIR *dirp;
 	struct dirent *next;
+	static bool first = true;
 
 	dirp = opendir(name);
 	if (!dirp) {
@@ -397,10 +415,15 @@ static void print_dir(char const *name)
 		return;
 	}
 
+	if (!first)
+		putchar('\n');
+	first = false;
+	fprintf(stdout, "%s:\n", name);
+
 	clear_slots();
 	while ((next = readdir(dirp)) != NULL) {
 		if (!file_ignored(next->d_name))
-			addfiles_slots(next->d_name, name);
+			addfiles_slots(next->d_name, name, false);
 	}
 
 	sortfiles_slots();
@@ -437,10 +460,10 @@ int main(int argc, char *argv[])
 	}
 
 	if (n_files <= 0) {
-		addfiles_slots(".", "");
+		addfiles_slots(".", "", true);
 	} else {
 		for (i = optind; i < argc; i++)
-			addfiles_slots(argv[i], "");
+			addfiles_slots(argv[i], "", true);
 	}
 
 	if (unused_index) {

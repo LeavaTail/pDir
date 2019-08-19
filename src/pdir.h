@@ -47,10 +47,12 @@ enum
  * struct fileinfo - File information.
  * @name:   File name
  * @status: File status
+ * @is_command_arg: specified that command_line argument
  */
 struct fileinfo {
 	char *name;
 	struct stat status;
+	bool is_command_arg;
 };
 
 #endif
