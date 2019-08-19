@@ -95,8 +95,20 @@ There is NO WARRANTY, to the extent permitted by law.\n\n", out);
 	fprintf (out, _("Written by %s.\n"), PROGRAM_AUTHOR);
 }
 
-/* "-a" option. print out include "." AND ".." AND ".FILENAME" */
-static bool print_all;
+/**
+ * PRINT MODE
+ * print out direcotry contents mode.
+ */
+static enum
+{
+	/* Default. Ignore files whose names start with "." */
+	PRINT_DEFAULT,
+	/* "-A" option. print out include "." AND ".." */
+	PRINT_ALMOST,
+	/* "-a" option. print out include "." AND ".." AND ".FILENAME" */
+	PRINT_ALL
+} print_mode;
+
 /* File information slots */
 static struct fileinfo *files;
 static struct fileinfo **sorted;
@@ -108,6 +120,7 @@ static size_t unused_index;
 static struct option const longopts[] =
 {
 	{"all", no_argument, NULL, 'a'},
+	{"almost-all", no_argument, NULL, 'A'},
 	{"help",no_argument, NULL, GETOPT_HELP_CHAR},
 	{"version",no_argument, NULL, GETOPT_VERSION_CHAR},
 	{0,0,0,0}
@@ -122,15 +135,19 @@ static struct option const longopts[] =
  */
 static int decode_cmdline(int argc, char **argv)
 {
+	print_mode = PRINT_DEFAULT;
 	int longindex = 0;
 	int opt = 0;
 
 	while ((opt = getopt_long(argc, argv,
-		"a",
+		"aA",
 		longopts, &longindex)) != -1) {
 		switch (opt) {
 		case 'a':
-			print_all = true;
+			print_mode = PRINT_ALL;
+			break;
+		case 'A':
+			print_mode = PRINT_ALMOST;
 			break;
 		case GETOPT_HELP_CHAR:
 			usage(EXIT_SUCCESS);
@@ -228,7 +245,17 @@ static int compare_name(const void *a, const void *b)
  */
 static bool file_ignored(char const *name)
 {
-	return (!print_all && (dot_or_ddot(name) || name[0] == '.'));
+	bool ret = false;
+
+	switch (print_mode) {
+	case PRINT_DEFAULT:
+		ret = (name[0] == '.') ? true : false;
+	case PRINT_ALMOST:
+		ret |= dot_or_ddot(name);
+	case PRINT_ALL:
+		break;
+	}
+	return ret;
 }
 
 /**
