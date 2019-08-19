@@ -12,6 +12,7 @@
 #include <limits.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include "pdir.h"
 #include "gettext.h"
 #include "error.h"
@@ -225,12 +226,10 @@ static int compare_name(const void *a, const void *b)
 	struct fileinfo *ai = *(struct fileinfo**)a;
 	struct fileinfo *bi = *(struct fileinfo**)b;
 
-	if (((ai->status.st_mode & S_IFMT) == S_IFDIR)
-	&& ((bi->status.st_mode & S_IFMT) != S_IFDIR))
+	if (S_ISDIR(ai->status.st_mode) && !S_ISDIR(bi->status.st_mode))
 		return COMPARE_EARLIER;
 
-	if (((ai->status.st_mode & S_IFMT) != S_IFDIR)
-	&& ((bi->status.st_mode & S_IFMT) == S_IFDIR))
+	if (!S_ISDIR(ai->status.st_mode) && S_ISDIR(bi->status.st_mode))
 		return COMPARE_LATER;
 
 	return strcmp(ai->name, bi->name);
@@ -407,7 +406,7 @@ static void extractfiles_fromdir(char const *dirname)
 	for (i = 0; i < unused_index; i++) {
 		struct fileinfo *f = sorted[i];
 
-		if (((f->status.st_mode & S_IFMT) == S_IFDIR))
+		if (S_ISDIR(f->status.st_mode))
 			add_list(f->name, strlen(f->name) + 1);
 	}
 
@@ -417,7 +416,7 @@ static void extractfiles_fromdir(char const *dirname)
 		struct fileinfo *f = sorted[i];
 		sorted[j] = f;
 		is_command_arg_direcory = f->is_command_arg &&
-							((f->status.st_mode & S_IFMT) == S_IFDIR);
+							S_ISDIR(f->status.st_mode);
 		j += !(is_command_arg_direcory);
 		if (is_command_arg_direcory)
 			free(f->name);
