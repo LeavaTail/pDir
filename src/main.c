@@ -293,7 +293,7 @@ static int addfiles_slots(char const *name, char const *dirname)
 		err = ALLOCATION_FAILURE;
 		goto errout;
 	}
-	strncpy(finfo->name, name, strlen(path) + 1);
+	strncpy(finfo->name, name, strlen(name) + 1);
 
 	unused_index++;
 errout:
@@ -313,7 +313,7 @@ static size_t __printfiles_slots(FILE *out, const struct fileinfo *f)
 	const char *name = f->name;
 
 	if (out != NULL)
-		len = fwrite(name, sizeof(char), strlen(name), out);
+		len = fwrite(name, sizeof(char), strlen(name) + 1, out);
 	return len;
 }
 
@@ -375,10 +375,10 @@ static void extractfiles_fromdir(char const *dirname)
 {
 	int i;
 	for (i = unused_index; i-- > 0; ) {
-		struct fileinfo f = files[i];
+		struct fileinfo *f = sorted[i];
 
-		if (((f.status.st_mode & S_IFMT) == S_IFDIR))
-			add_list(f.name, strlen(f.name));
+		if (((f->status.st_mode & S_IFMT) == S_IFDIR))
+			add_list(f->name, strlen(f->name) + 1);
 	}
 }
 
@@ -430,7 +430,7 @@ int main(int argc, char *argv[])
 		file_failure(ALLOCATION_FAILURE, NULL);
 		exit(ALLOCATION_FAILURE);
 	}
-	sorted = malloc(alloc_count * (sizeof(sorted)));
+	sorted = malloc(alloc_count * (sizeof(*sorted)));
 	if (!sorted) {
 		file_failure(ALLOCATION_FAILURE, NULL);
 		exit(ALLOCATION_FAILURE);
