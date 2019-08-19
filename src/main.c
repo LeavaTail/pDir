@@ -338,7 +338,7 @@ static void printfiles_slots(void)
 static void clear_slots(void)
 {
 	int i;
-	for (i = unused_index; i >= 0;  i--, unused_index--)
+	for (i = 0; i < unused_index; i++)
 		free(files[i].name);
 	unused_index = 0;
 }
@@ -374,7 +374,7 @@ static void sortfiles_slots(void)
 static void extractfiles_fromdir(char const *dirname)
 {
 	int i;
-	for (i = unused_index; i-- > 0; ) {
+	for (i = 0; i < unused_index; i++) {
 		struct fileinfo *f = sorted[i];
 
 		if (((f->status.st_mode & S_IFMT) == S_IFDIR))
