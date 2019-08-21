@@ -1,0 +1,105 @@
+Coding style
+============
+
+Following to Linux Kernel CodingStyle. Look at Linux Kernel Document.
+
+Point out important points.
+
+-------------
+1. Indentation
+ * Tabs are 4 characters, and thus indentations are also 4 characters.
+
+ * The preferred way to ease multiple indentation levels in a switch statement is
+   to align the "switch" and its subordinate "case" labels in the same column
+   instead of "double-indenting" the "case" labels.
+
+ * Don't put multiple assignments on a single line either.
+
+ * Outside of comments spaces are never used for indentation.
+
+ * Don't leave whitespace at the end of lines.
+
+
+2. Breaking long lines and strings
+ * The limit on the length of lines is 80 columns.
+
+3. Placing Braces and Spaces
+ * Put the opening brace last on the line, and put the closing brace first,
+   This applies to all non-function statement blocks (if, switch, for, while, do).
+
+ * Do not unnecessarily use braces where a single statement will do.
+   This does not apply if only one branch of a conditional statement is a single
+   statement; in the latter case use braces in both branches:
+
+ * Use a space after (most) keywords. but not with sizeof, typeof, alignof, or __attribute__.
+ * When declaring pointer data or a function that returns a pointer type, the
+   preferred use of ``*`` is adjacent to the data name or function name and not
+   adjacent to the type name.
+
+ * Use one space around (on each side of) most binary and ternary operators,
+   but no space after unary operator.
+
+ * no space before the postfix increment & decrement unary operators.
+   no space after the prefix increment & decrement unary operators.
+
+ * no space around the ``.`` and ``->`` structure member operators.
+
+4. Naming
+ * so should your naming be.
+
+5. Typedefs
+ * In general, a pointer, or a struct that has elements that can reasonably
+   be directly accessed should **never** be a typedef.
+
+6. Functions
+ * Functions should be short and sweet, and do just one thing.  They should
+   fit on one or two screenfuls of text (the ISO/ANSI screen size is 80x24,
+   as we all know), and do one thing and do that well.
+
+ * The number of local variables shouldn't exceed 5-10.
+
+7. Centralized exiting of functions
+ * The goto statement comes in handy when a function exits from multiple
+    locations and some common work such as cleanup has to be done.  If there is no
+    cleanup needed then just return directly.
+
+ * Choose label names which say what the goto does or why the goto exists.  An
+   example of a good name could be ``out_free_buffer:`` if the goto frees ``buffer``.
+   Avoid using GW-BASIC names like ``err1:`` and ``err2:``, as you would have to
+   renumber them if you ever add or remove exit paths, and they make correctness
+   difficult to verify anyway.
+
+8. Commenting
+ * Generally, you want your comments to tell WHAT your code does, not HOW.
+   Also, try to avoid putting comments inside a function body: if the
+   function is so complex that you need to separately comment parts of it,
+   you should probably go back to chapter 6 for a while.  You can make
+   small comments to note or warn about something particularly clever (or
+   ugly), but try to avoid excess.  Instead, put the comments at the head
+   of the function, telling people what it does, and possibly WHY it does
+   it.
+
+9. Macros, Enums and RTL
+ * Names of macros defining constants and labels in enums are capitalized.
+
+ * Enums are preferred when defining several related constants.
+
+ * CAPITALIZED macro names are appreciated but macros resembling functions
+   may be named in lower case.
+
+ * Generally, inline functions are preferable to macros resembling functions.
+
+ * Macros with multiple statements should be enclosed in a do - while block:
+
+10. Allocating memory
+ * The preferred form for passing a size of a struct.
+
+11. Function return values and names
+ * If the name of a function is an action or an imperative command,
+   the function should return an error-code integer.  If the name
+   is a predicate, the function should return a "succeeded" boolean.
+
+Appendix) Reference
+-------------------
+Kernel :ref:`process/coding-style.rst <codingstyle>`, by greg@kroah.com at OLS 2002:
+http://www.kroah.com/linux/talks/ols_2002_kernel_codingstyle_talk/html/

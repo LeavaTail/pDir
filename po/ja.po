@@ -1,0 +1,44 @@
+# Japanese translations for pDir package
+# pDir パッケージに対する英訳.
+# Copyright (C) 2019 Free Software Foundation, Inc.
+# This file is distributed under the same license as the pDir package.
+# LeavaTail <starbow.duster@gmail.com>, 2019.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: pDir 0.1\n"
+"Report-Msgid-Bugs-To: starbow.duster@gmail.com\n"
+"POT-Creation-Date: 2019-08-21 12:34+0900\n"
+"PO-Revision-Date: 2019-08-06 00:50+0900\n"
+"Last-Translator: LeavaTail <starbow.duster@gmail.com>\n"
+"Language-Team: Japanese\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src/main.c:55
+#, c-format
+msgid "Usage: %s [OPTION]... [FILE]...\n"
+msgstr "使用法: %s [オプション]... [ファイル]...\n"
+
+#: src/main.c:70
+#, c-format
+msgid "%s: cannot allocate memory"
+msgstr "%s: メモリを確保できません"
+
+#: src/main.c:73
+#, c-format
+msgid "%s: cannot access '%s'"
+msgstr "%s: '%s' にアクセスできません"
+
+#: src/main.c:76
+#, c-format
+msgid "%s: cannot open directory '%s'"
+msgstr "%s: '%s' にアクセスできません"
+
+#: src/main.c:99
+#, c-format
+msgid "Written by %s.\n"
+msgstr "作者 %s。\n"
