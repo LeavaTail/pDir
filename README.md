@@ -1,4 +1,8 @@
 # pDir
+[![Build Status](https://travis-ci.org/LeavaTail/pDir.svg?branch=master)](https://travis-ci.org/LeavaTail/pHex)
+[![codecov](https://codecov.io/gh/LeavaTail/pHex/branch/master/graph/badge.svg)](https://codecov.io/gh/LeavaTail/pHex)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/d2ed5007af074c9a815b468551e137fa)](https://app.codacy.com/app/LeavaTail/pDir?utm_source=github.com&utm_medium=referral&utm_content=LeavaTail/pDir&utm_campaign=Badge_Grade_Dashboard)
+
 `pdir`(Print DIRectory) list directory contents that referenced `ls`(GNU Core Utilitied).
 
 ## Description
