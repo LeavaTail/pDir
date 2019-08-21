@@ -54,6 +54,7 @@ matrix:
 
 before_install:
     - eval "${MATRIX_EVAL}"
+	- sudo apt install gettext
 
 script:
     - "script/bootstrap.sh"
