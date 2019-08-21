@@ -11,6 +11,9 @@
 #include <getopt.h>
 #include <limits.h>
 #include <dirent.h>
+#include <pwd.h>
+#include <grp.h>
+#include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include "pdir.h"
@@ -110,12 +113,55 @@ static enum
 	PRINT_ALL
 } print_mode;
 
+/**
+ * PRINT FORMAT MODE
+ * print out direcotry contents format mode.
+ */
+static enum
+{
+	/* Default. */
+	PRINT_DEFAULT_FORMAT,
+	/* "-l" option. a lot of info, one per line */
+	PRINT_LONG_FORMAT,
+} print_format;
+
+/**
+ * PRINT TIME MODE
+ */
+static enum
+{
+	/* Default, modify time */
+	PRINT_MODIFY_TIME,
+	/* "-c" option, change time */
+	PRINT_CHANGE_TIME,
+	/* "-u" option, access time */
+	PRINT_ACCESS_TIME
+} print_time;
+
 /* File information slots */
 static struct fileinfo *files;
 static struct fileinfo **sorted;
 /* allocate `fileinfo` count in slots, index of first unused */
 static size_t alloc_count;
 static size_t unused_index;
+/* the number of columns to use for columns */
+static int nlink_width;
+static int user_width;
+static int group_width;
+static int file_size_width;
+static int time_width;
+/* time information */
+static struct timespec current;
+static struct timespec year_ago;
+
+/* strftime formats for non-recent and recent files */
+static char const *long_time_format[2] =
+{
+	/* strftime format for non-recent files (older than 6 months). */
+	("%b %e  %Y"),
+	/* strftime format for recent files (younger than 6 months), in -l */
+	("%b %e %H:%M")
+};
 
 /* option data {"long name", needs argument, flags, "short name"} */
 static struct option const longopts[] =
@@ -137,15 +183,20 @@ static struct option const longopts[] =
 static int decode_cmdline(int argc, char **argv)
 {
 	print_mode = PRINT_DEFAULT;
+	print_format = PRINT_DEFAULT_FORMAT;
+	print_time = PRINT_MODIFY_TIME;
 	int longindex = 0;
 	int opt = 0;
 
 	while ((opt = getopt_long(argc, argv,
-		"aA",
+		"alA",
 		longopts, &longindex)) != -1) {
 		switch (opt) {
 		case 'a':
 			print_mode = PRINT_ALL;
+			break;
+		case 'l':
+			print_format = PRINT_LONG_FORMAT;
 			break;
 		case 'A':
 			print_mode = PRINT_ALMOST;
@@ -269,6 +320,36 @@ static void init_slots(void)
 }
 
 /**
+ * set_useralign - set user-id from uid with aligned
+ * @uid:   user-id
+ * @u_buf: output buffer. (username OR user-id)
+ * @width: output width
+ */
+static void set_useralign(uid_t uid, char *u_buf, int width)
+{
+	struct passwd *passwd = getpwuid(uid);
+	if (passwd)
+		sprintf(u_buf, "%-*s", width, passwd->pw_name);
+	else
+		sprintf(u_buf, "%-*d", width, uid);
+}
+
+/**
+ * set_groupalign - set group-id from gid with aligned
+ * @gid:   group-id
+ * @g_buf: output buffer. (groupname OR group-id)
+ * @width: output width
+ */
+static void set_groupalign(gid_t gid, char *g_buf, int width)
+{
+	struct group *group = getgrgid(gid);
+	if (group)
+		sprintf(g_buf, "%-*s", width, group->gr_name);
+	else
+		sprintf(g_buf, "%-*d", width, gid);
+}
+
+/**
  * addfiles_slots - Add a File information to slots
  * @name:    File name
  * @dirname: Base direcotry name
@@ -324,9 +405,96 @@ static int addfiles_slots(char const *name, char const *dirname,
 	strncpy(finfo->name, name, strlen(name) + 1);
 	finfo->is_command_arg = command_arg;
 
+	if (print_format == PRINT_LONG_FORMAT) {
+		char buf[FILETYPE_SIZE +
+				FILELINK_SIZE +
+				FILEUSERGROUP_SIZE +
+				FILESIZE_SIZE +
+				FILETIME_SIZE] = {0};
+		size_t len = 0;
+
+		uid_t uid = finfo->status.st_uid;
+		set_useralign(uid, buf, 0);
+		len = strlen(buf);
+		if (user_width < len)
+			user_width = len;
+
+		gid_t gid = finfo->status.st_gid;
+		set_groupalign(gid, buf, 0);
+		len = strlen(buf);
+		if (group_width < len)
+			group_width = len;
+
+		size_t size = finfo->status.st_size;
+		sprintf(buf, "%lu", size);
+		len = strlen(buf);
+		if (file_size_width < len)
+			file_size_width = len;
+
+		size_t nlink = finfo->status.st_nlink;
+		sprintf(buf, "%lu", nlink);
+		len = strlen(buf);
+		if (nlink_width < len)
+			nlink_width = len;
+	}
+
 	unused_index++;
 errout:
 	return err;
+}
+
+/**
+ * ftypelet - Display letters and indicators for each filetype.
+ * @bits:  File mode
+ *
+ * Return: File type bit
+ */
+static char ftypelet (mode_t bits)
+{
+  /* These are the most common, so test for them first.  */
+  if (S_ISREG (bits))
+    return '-';
+  if (S_ISDIR (bits))
+    return 'd';
+
+  /* Other letters standardized by POSIX 1003.1-2004.  */
+  if (S_ISBLK (bits))
+    return 'b';
+  if (S_ISCHR (bits))
+    return 'c';
+  if (S_ISLNK (bits))
+    return 'l';
+  if (S_ISFIFO (bits))
+    return 'p';
+
+  /* Other file types (though not letters) standardized by POSIX.  */
+  if (S_ISSOCK (bits))
+    return 's';
+
+  return '?';
+}
+
+/**
+ * get_filemode - fill in string STR with an ls-style.
+ * @mode: File mode
+ * @dest: Output buffer. Representative of the st_mode field.
+ */
+static void get_filemode(mode_t mode, char *dest)
+{
+	dest[0] = ftypelet(mode);
+	dest[1] = mode & S_IRUSR ? 'r' : '-';
+	dest[2] = mode & S_IWUSR ? 'w' : '-';
+	dest[3] = mode & S_ISUID ? (mode & S_IXUSR ? 's' : 'S')
+		: (mode & S_IXUSR ? 'x' : '-');
+	dest[4] = mode & S_IRGRP ? 'r' : '-';
+	dest[5] = mode & S_IWGRP ? 'w' : '-';
+	dest[6] = mode & S_ISGID ? (mode & S_IXGRP ? 's' : 'S')
+		: (mode & S_IXGRP ? 'x' : '-');
+	dest[7] = mode & S_IROTH ? 'r' : '-';
+	dest[8] = mode & S_IWOTH ? 'w' : '-';
+	dest[9] = mode & S_ISVTX ? (mode & S_IXOTH ? 't' : 'T')
+		: (mode & S_IXOTH ? 'x' : '-');
+	dest[10] = '\0';
 }
 
 /**
@@ -347,15 +515,92 @@ static size_t __printfiles_slots(FILE *out, const struct fileinfo *f)
 }
 
 /**
+ * timecmp - compare time *a to *b.
+ * @a:  compared timespec
+ * @b:  compared timespec
+ *
+ * Return: Positive - A > B
+ *         Negative - A < B
+ *         zero -     A = B
+ */
+static inline int
+timecmp (struct timespec a, struct timespec b)
+{
+	return (a.tv_sec < b.tv_sec ? COMPARE_EARLIER
+			: a.tv_sec > b.tv_sec ? COMPARE_LATER
+			: (int) (a.tv_nsec - b.tv_nsec));
+}
+
+/**
+ * __printfiles_slots_long - Print the file name in long format
+ * @out:    Output streams
+ * @f:      File information.
+ *
+ * Return:  Number of items write
+ */
+static size_t __printfiles_slots_long(FILE *out, const struct fileinfo *f)
+{
+	char mode[FILETYPE_SIZE] = {0};
+	char n_links[FILELINK_SIZE] = {0};
+	char user[FILEUSERGROUP_SIZE] = {0};
+	char group[FILEUSERGROUP_SIZE] = {0};
+	char size[FILESIZE_SIZE] = {0};
+	char time[FILETIME_SIZE];
+	struct timespec ts;
+	bool recent;
+	size_t len = 0;
+	const char *name = f->name;
+
+	get_filemode(f->status.st_mode, mode);
+	sprintf(n_links, "%*lu", nlink_width, f->status.st_nlink);
+	set_useralign(f->status.st_uid, user, user_width);
+	set_groupalign(f->status.st_gid, group, group_width);
+	sprintf(size, "%*lu", file_size_width, f->status.st_size);
+
+	switch (print_time)
+	{
+		case PRINT_MODIFY_TIME:
+			ts = f->status.st_mtim;
+			break;
+		case PRINT_CHANGE_TIME:
+			ts = f->status.st_ctim;
+			break;
+		case PRINT_ACCESS_TIME:
+			ts = f->status.st_atim;
+			break;
+	}
+	recent = (timecmp(year_ago, ts) < 0);
+	strftime(time,
+			FILETIME_SIZE,
+			long_time_format[recent],
+			localtime(&ts.tv_sec));
+
+	if (out != NULL)
+		len = fprintf(out, "%s %s %s %s %s %s %s",
+				mode, n_links, user, group, size, time, name);
+	return len;
+}
+
+/**
  * printfiles_slots - List all the files in slots
  */
 static void printfiles_slots(void)
 {
 	int i;
 
-	for (i = 0; i < unused_index; i++) {
-		__printfiles_slots(stdout, sorted[i]);
-		putchar('\n');
+	switch (print_format) {
+	case PRINT_DEFAULT_FORMAT:
+		for (i = 0; i < unused_index; i++) {
+			__printfiles_slots(stdout, sorted[i]);
+			putchar('\n');
+		}
+		break;
+	case PRINT_LONG_FORMAT:
+		for (i = 0; i < unused_index; i++) {
+			__printfiles_slots_long(stdout, sorted[i]);
+			putchar('\n');
+		}
+		break;
 	}
 }
 
@@ -367,6 +612,13 @@ static void printfiles_slots(void)
 static void clear_slots(void)
 {
 	int i;
+
+	nlink_width = 0;
+	user_width = 0;
+	group_width = 0;
+	file_size_width = 0;
+	time_width = 0;
+
 	for (i = 0; i < unused_index; i++)
 		free(files[i].name);
 	unused_index = 0;
@@ -483,6 +735,10 @@ int main(int argc, char *argv[])
 		file_failure(ALLOCATION_FAILURE, NULL);
 		exit(ALLOCATION_FAILURE);
 	}
+
+	clock_gettime(CLOCK_MONOTONIC, &current);
+	year_ago.tv_sec = current.tv_sec - (365.2425 * 24 * 60 * 60);
+	year_ago.tv_nsec = current.tv_nsec;
 
 	if (n_files <= 0) {
 		addfiles_slots(".", "", true);

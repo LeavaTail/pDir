@@ -44,6 +44,23 @@ enum
 #define ALLOCATE_COUNT	100
 
 /**
+ * FOR LONG FORMAT, BUFFER SIZE
+ */
+enum
+{
+	/* FILETYPE "drwxrwxrwx" */
+	FILETYPE_SIZE = 11,
+	/* FILELINK COUNT (FIXME)*/
+	FILELINK_SIZE = 11,
+	/* USERNAME/GROUPNAME SIZE "#define UT_NAMESIZE    32" */
+	FILEUSERGROUP_SIZE = 33,
+	/* FILESIZE "4(GB) = 4,294,967,296(B)" */
+	FILESIZE_SIZE = 11,
+	/* TIMESIZE (FIXME) */
+	FILETIME_SIZE = 81
+};
+
+/**
  * struct fileinfo - File information.
  * @name:   File name
  * @status: File status
