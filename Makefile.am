@@ -1,10 +1,16 @@
 # GLOBAL CFLAGS
-AM_CFLAGS   = -coverage -O2 -Wall 
-AM_CPPFLAGS = -DLOCALEDIR='"$(localedir)"' -DPDIR_DEBUG
-AM_CXXFLAGS = $(CFLAGS)
+AM_CFLAGS   = 
+AM_CXXFLAGS = 
 
 bin_PROGRAMS = pdir
 pdir_SOURCES = src/main.c src/error.c src/list.c
+
+pdir_CFLAGS = -DLOCALEDIR='"$(localedir)"'
+if DEBUG
+pdir_CFLAGS += -DPDIR_DEBUG -O0 -g3 -coverage -Wall
+else
+pdir_CFLAGS += -O2
+endif
 
 man_MANS = man/pdir.1
 EXTRA_DIST = config.rpath  docs mano

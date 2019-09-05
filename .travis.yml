@@ -63,7 +63,7 @@ before_install:
 
 script:
     - "script/bootstrap.sh"
-    - "./configure && make check"
+    - "./configure --enable-debug && make check"
     - "for pathfile in `ls src/*.c`; do gcov $pathfile; done"
 
 after_success:
