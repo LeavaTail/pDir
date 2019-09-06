@@ -16,6 +16,7 @@
 #include <time.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <locale.h>
 #include "pdir.h"
 #include "gettext.h"
 #include "error.h"
